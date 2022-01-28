@@ -10,6 +10,28 @@ use app\models\User;
 class TodoController extends Controller
 {
 
+    public function actionIsAuthorized($todo)
+    {
+        $user = User::getAuthUser();
+        $todo = Todo::findOne($todo["id"]);
+
+        //replace this with logged in middleware
+        if(!$user)
+        {
+            return "You are not logged in";
+            exit();
+        }
+
+        if($user->id == $todo["user_id"])
+        {
+            return true;
+        }else
+        {
+            return false;
+        }
+
+    }
+
     public function actionIndex()
     {
         // $user = Yii::$app->user;
@@ -56,14 +78,13 @@ class TodoController extends Controller
 
     public function actionEdit()
     {
+        
         $todos = new Todo;
         $request = Yii::$app->request->get();
-        if($request)
+
+        if($request && $this->actionIsAuthorized($request))
         {
             $id = $request['id'];
-
-            // return $id;
-
             $todo = Todo::find()->where(['id' => $id])->one();
             return $this->render('edit-todo', ['todo' => $todo]);
         }else
@@ -75,7 +96,7 @@ class TodoController extends Controller
     public function actionUpdate()
     {
         $request = Yii::$app->request->post();
-        if($request)
+        if($request && $this->actionIsAuthorized($request))
         {
             $id = $request['id'];
             $todo = Todo::findOne($id);
@@ -93,6 +114,10 @@ class TodoController extends Controller
             {
                 return "An error occured. Please try again.";
             }
+
+        }else
+        {
+            return "Bad request. Kindly try again";
         }
        
     }
@@ -101,7 +126,7 @@ class TodoController extends Controller
     public function actionDestroy()
     {
         $request = Yii::$app->request->post();
-        if($request)
+        if($request && $this->actionIsAuthorized($request))
         {
             $todo = Todo::findOne($request['id']);
             
@@ -112,6 +137,9 @@ class TodoController extends Controller
             {
                 return 'Something went wrong. Please try again';
             }
+        }else
+        {
+            return "Bad request. Kindly try again";
         }
     }
 
